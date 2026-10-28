@@ -83,6 +83,16 @@
       border-bottom: 1px solid #f0f1f5;
     }
     .todo-item .todo-text { flex: 1; font-size: 15px; }
+    /* 编辑态：正在编辑的那一行，文字换成输入框 */
+    .edit-input {
+      flex: 1;
+      font-family: inherit;
+      font-size: 15px;
+      border: 1.5px solid var(--accent);
+      border-radius: 6px;
+      padding: 4px 8px;
+      outline: none;
+    }
     .todo-item.done .todo-text { text-decoration: line-through; color: var(--muted); }
     .todo-item .delete {
       border: none;
@@ -156,12 +166,14 @@
       }
     };
 
-    // ===== 数据层：待办存在内存数组里，storage 负责刷新后恢复 =====
+    // ===== 数据层 =====
     let todos = storage.load();
     let currentFilter = 'all';
+    let editingId = null;    // 正在编辑的待办 id；null = 当前没有在编辑的
+    let cancelEdit = false;  // ESC 标志位：告诉 blur 处理器"这次别保存"
 
     // ===== 渲染层：数据 -> 界面。数据每变一次，整个列表重画一次 =====
-    // 这就是前端最核心的心智模型：你只负责改数据，画面交给 render()
+    // 核心心智模型：你只负责改数据，画面交给 render()
     function render() {
       const list = document.getElementById('todo-list');
       list.innerHTML = '';
@@ -175,11 +187,26 @@
       visible.forEach(todo => {
         const li = document.createElement('li');
         li.className = 'todo-item' + (todo.done ? ' done' : '');
-        li.innerHTML = `
-          <input type="checkbox" ${todo.done ? 'checked' : ''} data-id="${todo.id}">
-          <span class="todo-text">${escapeHtml(todo.text)}</span>
-          <button type="button" class="delete" data-id="${todo.id}">×</button>
-        `;
+
+        if (todo.id === editingId) {
+          // 编辑态：整行换成一个输入框，聚焦并全选旧文字
+          li.innerHTML = `<input class="edit-input" value="${escapeHtml(todo.text)}" data-id="${todo.id}">`;
+          const input = li.querySelector('.edit-input');
+          input.focus();
+          input.select();
+          // 失焦 = 保存（除非刚按了 ESC）。render 每次重建 DOM，所以直接给这个 input 挂监听
+          input.addEventListener('blur', () => {
+            if (cancelEdit) { cancelEdit = false; editingId = null; render(); return; }
+            saveEdit(input);
+          });
+        } else {
+          // 展示态：双击文字进入编辑（title 是给用户的提示）
+          li.innerHTML = `
+            <input type="checkbox" ${todo.done ? 'checked' : ''} data-id="${todo.id}">
+            <span class="todo-text" data-id="${todo.id}" title="双击编辑">${escapeHtml(todo.text)}</span>
+            <button type="button" class="delete" data-id="${todo.id}">×</button>
+          `;
+        }
         list.appendChild(li);
       });
 
@@ -189,13 +216,23 @@
       storage.save(todos);
     }
 
+    // 保存编辑：把输入框的值写回 data，然后重画。空文本 = 保留原值（产品决策，可改）
+    function saveEdit(input) {
+      const todo = todos.find(t => t.id === editingId);
+      if (!todo) return;                    // editingId 已清空时的兜底
+      const text = input.value.trim();
+      if (text) todo.text = text;           // 空文本不保存，保留原值
+      editingId = null;
+      render();
+    }
+
     // 转义用户输入，防止把待办文字写成 HTML 标签执行（安全好习惯）
     function escapeHtml(s) {
       return s.replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
-    // ===== 事件层：界面 -> 数据。用户在页面上的每个操作，最终都是改 todos 数组 =====
+    // ===== 事件层：界面 -> 数据。每个操作最终都是改 todos 或 editingId =====
 
     // 添加：表单提交（回车和点按钮都算提交）
     document.getElementById('todo-form').addEventListener('submit', e => {
@@ -218,6 +255,21 @@
         todos = todos.filter(t => t.id !== id);
         render();
       }
+    });
+
+    // 双击文字 -> 进入编辑态（和 click 搭同一趟委托车）
+    document.getElementById('todo-list').addEventListener('dblclick', e => {
+      if (e.target.classList.contains('todo-text')) {
+        editingId = Number(e.target.dataset.id);
+        render();
+      }
+    });
+
+    // 编辑中的键盘：回车保存，ESC 取消（借 blur 走取消流程）
+    document.getElementById('todo-list').addEventListener('keydown', e => {
+      if (!e.target.classList.contains('edit-input')) return;
+      if (e.key === 'Enter') { e.preventDefault(); saveEdit(e.target); }
+      if (e.key === 'Escape') { cancelEdit = true; e.target.blur(); }
     });
 
     // 过滤
