@@ -6,14 +6,15 @@
   <title>我的待办清单</title>
   <style>
     /* ==================== CSS 部分：负责"皮肤" ==================== */
-    /* 主题变量：改这一行，整站配色跟着变 —— 今天第一个动手点 */
+    /* 主题变量：改这里就能换整站配色 —— 但变量名是语义契约：
+       muted = 需要弱化的文字，danger = 警示/悬停色；改之前先搜 var(--x) 看它管着哪些元素 */
     :root {
-      --accent: #4f6ef7;
-      --bg: #f5f6fa;
-      --card: #ffffff;
+      --accent: #c093ea;
+      --bg: #d5dcf8;
+      --card: #eaf6fd;
       --text: #2b2f3a;
-      --muted: #9aa0b0;
-      --danger: #e5534b;
+      --muted: #8a85a3;
+      --danger: #e8a33d;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -114,7 +115,7 @@
 <body>
   <!-- ==================== HTML 部分：负责"骨架" ==================== -->
   <main class="app">
-    <h1>📋 待办清单</h1>
+    <h1>📋 今日待办</h1>
     <p class="subtitle">单文件版：HTML + CSS + JS 都在这个文件里，双击即用</p>
 
     <!-- 输入区：一个输入框 + 一个按钮 -->
