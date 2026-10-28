@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>陈同学 · 个人主页</title>
+  <style>
+    /* ==================== CSS 部分 ==================== */
+    /* 主题变量：换 accent 一个值，头像渐变、链接悬停、主题按钮一起变 */
+    :root {
+      --accent: #6d5bd0;
+      --text: #2b2f3a;
+      --muted: #8a8a9e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      /* 居中三行咒语：min-height 撑满一屏 + flex 两个方向都居中。
+         以后每个落地页都用它，可以直接背下来 */
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 16px;
+
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      /* 渐变：个人页的"设计感"一半靠它。两个颜色相近一点就不会俗 */
+      background: linear-gradient(135deg, #edf0fa 0%, #e6f4f4 100%);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 12px 40px rgba(43, 47, 58, .08);
+    }
+
+    /* 顶行：头像在左，换色按钮在右 */
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      font-weight: 500;
+      color: #fff;
+      /* 渐变借用了 accent：换主题色时头像会一起变 */
+      background: linear-gradient(135deg, var(--accent), #4f8ef7);
+    }
+
+    .theme-btn {
+      border: 1px solid #e4e5ef;
+      background: #fff;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: #6a6a7e;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* 语义化标签 header：页面头部信息（名字 + 签名） */
+    header h1 {
+      /* 字体搭配：无衬线正文 + 衬线大标题，最省事的"不像默认"技巧 */
+      font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+      font-size: 26px;
+      margin: 18px 0 6px;
+    }
+    .tagline { color: var(--muted); font-size: 14px; }
+
+    /* 语义化标签 nav：导航链接区 */
+    .links { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 6px; }
+    .links a {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: #f2f3f9;
+      color: #4a4a5e;
+      font-size: 13px;
+      text-decoration: none;
+      transition: background .2s, color .2s;
+    }
+    .links a:hover { background: var(--accent); color: #fff; }
+    .links a.primary { background: var(--accent); color: #fff; }
+
+    /* 语义化标签 section：一段独立的内容 */
+    .about { margin-top: 24px; }
+    .about h2 {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .about p { font-size: 14px; line-height: 1.75; color: #4a4a5e; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .tag {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f2f3f9;
+      color: #6a6a7e;
+    }
+
+    /* 语义化标签 footer：页脚 */
+    footer {
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f5;
+      font-size: 12px;
+      color: #a8a8b8;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 28px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ==================== HTML 部分 ==================== -->
+  <!-- 注意这里没有一堆 div：header / nav / section / footer 各自表明"这块是什么"，
+       这就是语义化——浏览器、读屏软件、搜索引擎都靠它理解页面 -->
+  <main class="card">
+    <div class="top-row">
+      <div class="avatar">陈</div>
+      <button type="button" id="theme-btn" class="theme-btn">换色</button>
+    </div>
+
+    <header>
+      <h1>陈同学</h1>
+      <p class="tagline">广东工业大学 · 正在从零体验计算机的各个方向</p>
+    </header>
+
+    <nav class="links">
+      <a class="primary" href="https://github.com/cry-88" target="_blank" rel="noopener">GitHub</a>
+      <!-- 换成你的邮箱：href="mailto:you@example.com" -->
+      <a href="#">邮箱</a>
+      <!-- 想加链接就复制一行 <a>，比如博客、B站、知乎 -->
+    </nav>
+
+    <section class="about">
+      <h2>关于我</h2>
+      <!-- 这段是示例，换成你自己的话：你是谁、在学什么、对什么好奇。两三句就够 -->
+      <p>广工学生，正在通过「每日体验一个计算机方向」这个项目寻找自己适配的技术路线。相信手感比规划诚实——所以每个方向都先动手做一个小东西，再决定要不要深入。</p>
+    </section>
+
+    <section class="about">
+      <h2>我在做什么</h2>
+      <p>14 天方向体验计划：从前端、后端、数据科学到系统底层，每天一个可运行的小项目，用排除法收集自己的偏好数据。</p>
+      <div class="tags">
+        <span class="tag">前端</span>
+        <span class="tag">后端</span>
+        <span class="tag">数据</span>
+        <span class="tag">系统</span>
+        <span class="tag">寻找方向</span>
+      </div>
+    </section>
+
+    <footer>手写于 2026 年 10 月 · HTML + CSS，无框架</footer>
+  </main>
+
+  <script>
+    // ==================== JS 部分（全部只有这几行）====================
+    // 换色 = 改 :root 里的 --accent 一个变量值。
+    // 头像渐变、链接悬停色都会跟着变——"改一行，全局生效"，D1 学过的那招
+    let light = true;
+    document.getElementById('theme-btn').addEventListener('click', () => {
+      light = !light;
+      document.documentElement.style.setProperty('--accent', light ? '#6d5bd0' : '#0f8a6d');
+    });
+  </script>
+</body>
+</html>
