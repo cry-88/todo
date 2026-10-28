@@ -40,6 +40,26 @@
     h1 { font-size: 24px; }
     .subtitle { color: var(--muted); font-size: 13px; margin: 6px 0 20px; }
 
+    /* ===== 新增：完成度进度条 =====
+       条本身只有一个会变的值：width。百分比是 JS 算好塞进来的——
+       进度不是"画"出来的，是"算"出来的 */
+    .progress-wrap { margin: 0 0 18px; }
+    .progress-text { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .progress-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, .75);
+      border: 1px solid #e4e6ee;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width .35s ease;
+    }
+
     /* 输入区用 flex 横向排列：输入框占满剩余空间 */
     .todo-form { display: flex; gap: 8px; }
     .todo-form input {
@@ -50,7 +70,19 @@
       font-size: 14px;
       outline: none;
     }
-    .todo-form input:focus { border-color: var(--accent); }
+    /* 新增：分类下拉框，样式跟着输入框走，但不占满空间 */
+    .todo-form select {
+      border: 1.5px solid #e4e6ee;
+      border-radius: 10px;
+      padding: 10px 8px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+    }
+    .todo-form input:focus,
+    .todo-form select:focus { border-color: var(--accent); }
     .todo-form button {
       background: var(--accent);
       color: #fff;
@@ -83,6 +115,19 @@
       border-bottom: 1px solid #f0f1f5;
     }
     .todo-item .todo-text { flex: 1; font-size: 15px; }
+
+    /* ===== 新增：分类徽标 =====
+       注意：颜色不写死在这条 CSS 里，而是 JS 按数据查 CAT_STYLE 表
+       生成 style 属性——想换配色，改 JS 里那一张表就够了 */
+    .badge {
+      flex-shrink: 0;
+      font-size: 11px;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    .todo-item.done .badge { opacity: .5; }
+
     /* 编辑态：正在编辑的那一行，文字换成输入框 */
     .edit-input {
       flex: 1;
@@ -103,6 +148,9 @@
       visibility: hidden;
     }
     .todo-item:hover .delete { visibility: visible; color: var(--danger); }
+
+    /* 新增：空状态提示 */
+    .empty-tip { color: var(--muted); font-size: 13px; padding: 14px 4px; }
 
     .todo-footer {
       display: flex;
@@ -128,9 +176,16 @@
     <h1>📋 今日待办</h1>
     <p class="subtitle">单文件版：HTML + CSS + JS 都在这个文件里，双击即用</p>
 
-    <!-- 输入区：一个输入框 + 一个按钮 -->
+    <!-- 新增：完成度进度条。文字和条的宽度都由 JS 填充 -->
+    <div class="progress-wrap">
+      <div class="progress-text" id="progress-text">已完成 0 / 0</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <!-- 输入区：一个输入框 + 一个分类下拉 + 一个按钮 -->
     <form id="todo-form" class="todo-form">
       <input id="todo-input" type="text" placeholder="今天要做什么？" autocomplete="off">
+      <select id="todo-cat"></select>
       <button type="submit">添加</button>
     </form>
 
@@ -166,8 +221,34 @@
       }
     };
 
+    // ===== 新增：分类表——整个 App 只有这一个地方定义分类 =====
+    // 加分类 = 在 CATS 里加一行、CAT_STYLE 里加一行，
+    // 下拉选项和徽标配色会自动跟上（一处修改，全局生效）
+    const CATS = ['工作', '学习', '生活'];
+    const CAT_STYLE = {
+      '工作': { bg: '#e6f1fb', fg: '#0c447c' },
+      '学习': { bg: '#eeedfe', fg: '#3c3489' },
+      '生活': { bg: '#eaf3de', fg: '#27500a' },
+    };
+
+    // 生成徽标 HTML：颜色按分类查表；表外分类走兜底，数据脏了也不崩
+    function badgeHtml(cat) {
+      const s = CAT_STYLE[cat] || CAT_STYLE['生活'];
+      return `<span class="badge" style="background:${s.bg};color:${s.fg}">${escapeHtml(cat)}</span>`;
+    }
+
     // ===== 数据层 =====
     let todos = storage.load();
+    if (todos.length === 0) {
+      // 首次打开放三条示例：进度条和分类徽标一打开就能看到效果
+      todos = [
+        { id: 1, text: '体验前端：待办升级版', done: true,  cat: '学习' },
+        { id: 2, text: '给进度条换个颜色',     done: false, cat: '工作' },
+        { id: 3, text: '晚上去跑步',           done: false, cat: '生活' },
+      ];
+    }
+    todos.forEach(t => { if (!t.cat) t.cat = '生活'; });  // 旧数据没有 cat 字段，自动补默认分类
+
     let currentFilter = 'all';
     let editingId = null;    // 正在编辑的待办 id；null = 当前没有在编辑的
     let cancelEdit = false;  // ESC 标志位：告诉 blur 处理器"这次别保存"
@@ -189,8 +270,8 @@
         li.className = 'todo-item' + (todo.done ? ' done' : '');
 
         if (todo.id === editingId) {
-          // 编辑态：整行换成一个输入框，聚焦并全选旧文字
-          li.innerHTML = `<input class="edit-input" value="${escapeHtml(todo.text)}" data-id="${todo.id}">`;
+          // 编辑态：整行换成 徽标 + 输入框，聚焦并全选旧文字
+          li.innerHTML = `${badgeHtml(todo.cat)}<input class="edit-input" value="${escapeHtml(todo.text)}" data-id="${todo.id}">`;
           const input = li.querySelector('.edit-input');
           input.focus();
           input.select();
@@ -204,11 +285,29 @@
           li.innerHTML = `
             <input type="checkbox" ${todo.done ? 'checked' : ''} data-id="${todo.id}">
             <span class="todo-text" data-id="${todo.id}" title="双击编辑">${escapeHtml(todo.text)}</span>
+            ${badgeHtml(todo.cat)}
             <button type="button" class="delete" data-id="${todo.id}">×</button>
           `;
         }
         list.appendChild(li);
       });
+
+      // 空状态：列表为空时给一句提示，而不是一片空白
+      if (visible.length === 0) {
+        const tip = document.createElement('li');
+        tip.className = 'empty-tip';
+        tip.textContent = todos.length ? '这个过滤条件下没有待办' : '还没有待办，从上面加一条吧';
+        list.appendChild(tip);
+      }
+
+      // ===== 新增：进度条——算出来的，不是画出来的 =====
+      // done 数量 ÷ 总数 = 宽度百分比。记住这个句式：界面是数据的函数
+      const total = todos.length;
+      const doneCount = todos.filter(t => t.done).length;
+      const pct = total ? Math.round(doneCount / total * 100) : 0;
+      document.getElementById('progress-text').textContent =
+        total ? `已完成 ${doneCount} / ${total}` : '还没有待办';
+      document.getElementById('progress-fill').style.width = pct + '%';
 
       const left = todos.filter(t => !t.done).length;
       document.getElementById('todo-count').textContent = `还剩 ${left} 项`;
@@ -234,13 +333,22 @@
 
     // ===== 事件层：界面 -> 数据。每个操作最终都是改 todos 或 editingId =====
 
-    // 添加：表单提交（回车和点按钮都算提交）
+    // 分类下拉的选项由 CATS 生成——加分类不用动 HTML
+    const catSelect = document.getElementById('todo-cat');
+    CATS.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      catSelect.appendChild(opt);
+    });
+
+    // 添加：表单提交（回车和点按钮都算提交），连分类一起读出来
     document.getElementById('todo-form').addEventListener('submit', e => {
       e.preventDefault();
       const input = document.getElementById('todo-input');
       const text = input.value.trim();
       if (!text) return;
-      todos.push({ id: Date.now(), text, done: false });
+      todos.push({ id: Date.now(), text, done: false, cat: catSelect.value });
       input.value = '';
       render();
     });
