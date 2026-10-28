@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的待办清单</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <h1>📋 待办清单</h1>
+    <p class="subtitle">纯 HTML + CSS + JavaScript，零依赖，双击即用</p>
+
+    <!-- 输入区：一个输入框 + 一个按钮 -->
+    <form id="todo-form" class="todo-form">
+      <input id="todo-input" type="text" placeholder="今天要做什么？" autocomplete="off">
+      <button type="submit">添加</button>
+    </form>
+
+    <!-- 过滤条 -->
+    <div class="filters">
+      <button class="filter active" data-filter="all">全部</button>
+      <button class="filter" data-filter="active">未完成</button>
+      <button class="filter" data-filter="done">已完成</button>
+    </div>
+
+    <!-- 列表区：里面的内容由 JS 动态生成 -->
+    <ul id="todo-list" class="todo-list"></ul>
+
+    <!-- 底部状态栏 -->
+    <footer class="todo-footer">
+      <span id="todo-count">还剩 0 项</span>
+      <button id="clear-done">清除已完成</button>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
