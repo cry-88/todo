@@ -1,0 +1,11 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+# Node
+node_modules/
+# 密钥（D3 调 LLM API 会用到）
+.env
+# 助手工作笔记（不进仓库）
+.workbuddy/
