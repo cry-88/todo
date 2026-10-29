@@ -14,7 +14,7 @@
 想停止：终端里按 Ctrl+C
 """
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 import random
 import os
 
@@ -55,6 +55,7 @@ def home():
     <p>接口：/api/joke/count 笑话总数</p>
     <p>接口：/api/jokes 全部笑话</p>
     <p>接口：/api/joke/数字id 查看单条笑话</p>
+    <p>接口：POST /api/joke 提交新笑话（去 /play 页面提交）</p>
     <p><a href="/play">去前端页面玩</a></p>
     """
 
@@ -96,6 +97,27 @@ def one_joke(joke_id):
             return jsonify(joke)
     # 找不到要如实说——404 是"没有这个资源"的官方回答
     return jsonify({"error": f"没有 id 为 {joke_id} 的笑话"}), 404
+
+
+# ---------- 投稿新笑话（POST）----------
+# GET 是"要数据"（数据放在网址里），POST 是"送数据"（数据放在请求身体里）。
+# 一个路由可以声明只接 POST：methods=["POST"]
+@app.route("/api/joke", methods=["POST"])
+def add_joke():
+    # 从请求身体里取出浏览器发来的 JSON，变成 Python 字典
+    # silent=True：送来的不是合法 JSON 时返回 None 而不是直接崩
+    data = request.get_json(silent=True) or {}
+    setup = data.get("setup", "").strip()
+    punchline = data.get("punchline", "").strip()
+    # 后端永远不信任前端送来的东西——空的、缺的，都要在这里挡住
+    if not setup or not punchline:
+        return jsonify({"error": "setup 和 punchline 都不能为空"}), 400
+    # id 接着现有最大的往下编（default=0 是防空列表的保险）
+    new_id = max((j["id"] for j in jokes), default=0) + 1
+    joke = {"id": new_id, "setup": setup, "punchline": punchline}
+    jokes.append(joke)
+    # 201 = "创建成功"，比 200 更精确的状态码
+    return jsonify(joke), 201
 
 
 # ---------- 启动 ----------

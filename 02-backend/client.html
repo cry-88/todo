@@ -9,12 +9,21 @@
   .setup { font-weight: bold; }
   .punchline { color: #4f6ef7; margin-top: 10px; }
   button { margin-top: 16px; padding: 10px 24px; font-size: 16px; cursor: pointer; }
+  input { width: 90%; padding: 8px; }
+  #msg { margin-left: 10px; color: #2da44e; }
 </style>
 </head>
 <body>
   <h1>😂 随机笑话</h1>
   <div id="joke">点下面的按钮，让服务器讲一个</div>
   <button onclick="getJoke()">再来一个</button>
+
+  <hr>
+  <h3>✏️ 投稿一条你的笑话</h3>
+  <input id="setup" placeholder="铺垫（问题部分）">
+  <input id="punchline" placeholder="包袱（答案部分）">
+  <button onclick="addJoke()">提交投稿</button>
+  <span id="msg"></span>
 
 <script>
 // 这个页面就是 D1 你写过的那种 HTML/JS。
@@ -25,6 +34,27 @@ async function getJoke() {
   const joke = await res.json();   // 把服务器运回的 JSON 变回 JS 对象
   document.getElementById("joke").innerHTML =
     `<div class="setup">${joke.setup}</div><div class="punchline">${joke.punchline}</div>`;
+}
+
+// 投稿：这次不是"要数据"，是"送数据"给服务器
+async function addJoke() {
+  const setup = document.getElementById("setup").value;
+  const punchline = document.getElementById("punchline").value;
+  // fetch 默认是 GET；送数据必须显式声明三件事：
+  const res = await fetch("/api/joke", {
+    method: "POST",                                    // 1. 用 POST 方法
+    headers: {"Content-Type": "application/json"},     // 2. 告诉服务器：我送的是 JSON
+    body: JSON.stringify({setup, punchline})           // 3. JS 对象 → JSON 字符串，装进"身体"运过去
+  });
+  const msg = document.getElementById("msg");
+  if (res.ok) {
+    msg.textContent = "投稿成功！点\"再来一个\"可能就抽到它";
+    document.getElementById("setup").value = "";
+    document.getElementById("punchline").value = "";
+    getJoke();   // 顺手刷新一条
+  } else {
+    msg.textContent = "投稿失败：铺垫和包袱都要填";
+  }
 }
 </script>
 </body>
