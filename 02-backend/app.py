@@ -10,7 +10,7 @@
 
 运行方式（在 02-backend 目录下）：
     venv/Scripts/python app.py
-然后浏览器打开 http://localhost:5000
+然后浏览器打开 http://localhost:5050
 想停止：终端里按 Ctrl+C
 """
 
@@ -34,14 +34,33 @@ jokes = [
     {"id": 4, "setup": "为什么程序员喜欢暗色模式", "punchline": "因为光会吸引 bug"},
     {"id": 5, "setup": "妻子让程序员买东西：买 6 个鸡蛋，如果有西红柿，就买 10 个", "punchline": "结果他买了 10 个鸡蛋"},
     {"id": 6, "setup": "什么是调试代码", "punchline": "在黑暗中打猎，而猎物还是隐形的"},
+    {"id": 7, "setup": "为什么程序员不爱出门？", "punchline": "外面的环境没有IDE自动补全"},
+    {"id": 8, "setup": "算法和数据结构去相亲，为什么黄了？", "punchline": "算法说它时间复杂度O(1)，数据结构说它空间不够存感情"},
+    {"id": 9, "setup": "程序员去钓鱼，钓上来什么最开心？", "punchline": "不是鱼，是没有空指针的浮标"},
+    {"id": 10, "setup": "递归为什么容易抑郁？", "punchline": "它总是找不到终止条件"},
+    {"id": 11, "setup": "数组和链表去逛街，谁走得更快？", "punchline": "数组，它可以随机访问，链表只能一步一步挪"},
+    {"id": 12, "setup": "为什么C++程序员很难交到朋友？", "punchline": "动不动就抛出异常"},
+    {"id": 13, "setup": "Git 最害怕什么？", "punchline": "强制覆盖，直接丢掉所有回忆"},
+    {"id": 14, "setup": "浮点数为什么不适合谈恋爱？", "punchline": "看起来相等，实际上并不相等"},
+
 ]
 
 # ---------- 页面 ----------
 
 @app.route("/")
 def home():
-    # 后端不只是返回数据，也可以返回网页（早年的网站都是这么干的）
-    return "<h1>笑话 API 跑起来了</h1><p>试试这些地址：</p><ul><li>/api/joke/random 随机一条</li><li>/api/jokes 全部</li><li>/play 网页版</li></ul>"
+    return """
+    <h1>程序员笑话小站</h1>
+    <p>接口：/api/joke/random 随机笑话</p>
+    <p>接口：/api/joke/count 笑话总数</p>
+    <p>接口：/api/jokes 全部笑话</p>
+    <p>接口：/api/joke/数字id 查看单条笑话</p>
+    <p><a href="/play">去前端页面玩</a></p>
+    """
+
+
+
+
 
 
 @app.route("/play")
@@ -60,6 +79,9 @@ def random_joke():
     # jsonify 把 Python 字典变成 JSON——前后端之间运数据的标准格式
     return jsonify(joke)
 
+@app.route("/api/joke/count")
+def joke_count():
+    return jsonify({"count": len(jokes)})
 
 @app.route("/api/jokes")
 def all_jokes():
@@ -82,4 +104,4 @@ if __name__ == "__main__":
     # （第 4 步写 pytest 测试时就是 import 它，所以必须这么写）
     #
     # debug=True：改代码保存后自动重启；页面出错时显示详细原因（开发期专用）
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5050)
