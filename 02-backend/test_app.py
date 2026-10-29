@@ -40,7 +40,7 @@ def test_missing_joke_returns_404():
 
 def test_add_joke():
     """POST 投稿一条新笑话：返回 201，且总数 +1
-    注意：这个测试会真的往 jokes 里加一条（测试客户端直接操作内存）"""
+    注意：这个测试会真的往 jokes 里加一条并写入 jokes.json（测试客户端直接操作数据）"""
     before = len(jokes)
     res = client.post("/api/joke", json={"setup": "测试铺垫", "punchline": "测试包袱"})
     assert res.status_code == 201

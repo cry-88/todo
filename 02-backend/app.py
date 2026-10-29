@@ -17,6 +17,7 @@
 from flask import Flask, jsonify, send_from_directory, request
 import random
 import os
+import json
 
 # Flask 应用对象——整个服务器的核心就是这个 app
 app = Flask(__name__)
@@ -24,10 +25,13 @@ app = Flask(__name__)
 # 让 JSON 里的中文直接显示，不用 \uXXXX 转义（F12 Network 里看原始数据更直观）
 app.json.ensure_ascii = False
 
-# ---------- "数据库"：内存里的一张表 ----------
-# 现在数据放在这个列表里，服务器一重启就全丢。
-# D5 数据库体验日，我们会把它换成真正的 SQLite——先记住这个"待办"。
-jokes = [
+# ---------- 数据：文件持久化 ----------
+# 种子数据：代码里写死的 14 条。第一次运行时写入 jokes.json，
+# 之后 jokes.json 才是真相——投稿不再活在内存里，重启服务器也不会丢。
+# （D5 数据库日，我们会把文件换成 SQLite，体会"十万条数据还要秒查"的场合）
+DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jokes.json")
+
+SEED_JOKES = [
     {"id": 1, "setup": "程序员最讨厌的两件事", "punchline": "写文档，和别人不写文档"},
     {"id": 2, "setup": "为什么程序员总是分不清万圣节和圣诞节", "punchline": "因为 Oct 31 == Dec 25（八进制的 31 就是十进制的 25）"},
     {"id": 3, "setup": "一个 SQL 语句走进酒吧，走到两张桌子前", "punchline": "它问：我能 JOIN 你们吗？"},
@@ -44,6 +48,24 @@ jokes = [
     {"id": 14, "setup": "浮点数为什么不适合谈恋爱？", "punchline": "看起来相等，实际上并不相等"},
 
 ]
+
+
+def save_jokes(joke_list):
+    """把整个笑话列表写进 jokes.json（ensure_ascii=False 让中文直接可读）"""
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(joke_list, f, ensure_ascii=False, indent=2)
+
+
+def load_jokes():
+    """启动时加载：jokes.json 存在就从文件读（含以前的所有投稿）；否则用种子并落盘"""
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    save_jokes(SEED_JOKES)
+    return list(SEED_JOKES)
+
+
+jokes = load_jokes()
 
 # ---------- 页面 ----------
 
@@ -116,6 +138,7 @@ def add_joke():
     new_id = max((j["id"] for j in jokes), default=0) + 1
     joke = {"id": new_id, "setup": setup, "punchline": punchline}
     jokes.append(joke)
+    save_jokes(jokes)   # 落盘：从此这条投稿永久保存，重启也不丢
     # 201 = "创建成功"，比 200 更精确的状态码
     return jsonify(joke), 201
 
