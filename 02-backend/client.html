@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>笑话播放器</title>
+<style>
+  body { font-family: "Microsoft YaHei", sans-serif; max-width: 480px; margin: 60px auto; padding: 0 16px; }
+  #joke { background: #f5f6fa; border-radius: 12px; padding: 24px; min-height: 90px; }
+  .setup { font-weight: bold; }
+  .punchline { color: #4f6ef7; margin-top: 10px; }
+  button { margin-top: 16px; padding: 10px 24px; font-size: 16px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <h1>😂 随机笑话</h1>
+  <div id="joke">点下面的按钮，让服务器讲一个</div>
+  <button onclick="getJoke()">再来一个</button>
+
+<script>
+// 这个页面就是 D1 你写过的那种 HTML/JS。
+// 它只干一件事：向服务器要数据，然后把数据显示出来。
+async function getJoke() {
+  // fetch = 浏览器向服务器发一个请求，等它把数据运回来
+  const res = await fetch("/api/joke/random");
+  const joke = await res.json();   // 把服务器运回的 JSON 变回 JS 对象
+  document.getElementById("joke").innerHTML =
+    `<div class="setup">${joke.setup}</div><div class="punchline">${joke.punchline}</div>`;
+}
+</script>
+</body>
+</html>
