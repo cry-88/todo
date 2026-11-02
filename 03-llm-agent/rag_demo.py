@@ -16,8 +16,10 @@ Mini RAG —— 极简文档问答
     python rag_demo.py
 """
 
+import argparse
 import os
 import re
+import sys
 from collections import Counter
 from math import sqrt
 
@@ -26,7 +28,7 @@ from math import sqrt
 API_KEY = os.environ.get("LLM_API_KEY", "")          # 你的 API key，没有就留空
 BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com")  # 国产 API 多兼容 OpenAI 格式
 MODEL = os.environ.get("LLM_MODEL", "deepseek-chat")
-TOP_K = 2          # 每次检索挑几段材料拼进 prompt
+TOP_K = 4          # 每次检索挑几段材料拼进 prompt
 MATERIAL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "material.md")
 
 # ---------------- 第 1 段：切分 ----------------
@@ -96,7 +98,7 @@ def build_prompt(question, hits):
         "[{}] 《{}》\n{}".format(n + 1, h["title"], h["text"]) for n, (score, h) in enumerate(hits)
     )
     return (
-        "你是一个文档问答助手。请只根据下面给出的资料回答问题，不要使用资料之外的知识。\n"
+        "你是一个文档问答助手。用大白话回答，100 字以内，先给结论，不要使用资料之外的知识。\n"
         "如果资料里找不到答案，就回答'资料里没提到'。\n\n"
         "资料：\n{}\n\n"
         "问题：{}"
@@ -139,8 +141,22 @@ def show(hits, prompt):
     print(prompt)
 
 def main():
-    chunks = load_chunks(MATERIAL)
-    print("Mini RAG 已就绪：{} 个文档段来自 material.md".format(len(chunks)))
+    parser = argparse.ArgumentParser(
+        description="Mini RAG：极简文档问答（切分 -> 检索 -> 拼 prompt），纯标准库零依赖",
+        epilog="示例：python rag_demo.py 我的笔记.md --top-k 3",
+    )
+    parser.add_argument("doc", nargs="?", default=MATERIAL,
+                        help="要问答的 markdown 文档路径（默认：同目录的 material.md）")
+    parser.add_argument("--top-k", type=int, default=TOP_K,
+                        help="每次检索最多挑几段材料拼进 prompt（默认：{}）".format(TOP_K))
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.doc):
+        print("找不到文件：{}".format(args.doc))
+        sys.exit(1)
+
+    chunks = load_chunks(args.doc)
+    print("Mini RAG 已就绪：{} 个文档段来自 {}".format(len(chunks), args.doc))
     if API_KEY:
         print("已配置 API，直接跑真问答。")
     else:
@@ -158,7 +174,7 @@ def main():
             print("再见。")
             break
 
-        hits = retrieve(q, chunks)
+        hits = retrieve(q, chunks, top_k=args.top_k)
         if not hits:
             print("  没有检索到任何相关段落——换个问法试试（关键词重叠太少）。\n")
             continue

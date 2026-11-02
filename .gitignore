@@ -46,3 +46,6 @@ Thumbs.db
 
 # ===== 项目专用：助手工作笔记，禁止上传 =====
 .workbuddy/
+
+# ===== 工具生成的本地快照缓存 =====
+.merkle-snapshot.json
