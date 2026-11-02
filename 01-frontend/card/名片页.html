@@ -1,4 +1,21 @@
 <!DOCTYPE html>
+<!--
+════════════════════════════════════════════════════════════════
+  个人名片页 · D1 番外作品（教学注释版）
+════════════════════════════════════════════════════════════════
+
+  【这个文件是什么】一个极简个人主页：头像 + 名字 + 链接 + 简介。
+   纯 HTML + CSS + 几行 JS，没有用任何框架——前端"裸写"长这样。
+
+  【怎么读】骨架（HTML）→ 皮肤（CSS）→ 肌肉（JS），三段往下看。
+   【怎么跑】双击用浏览器打开。
+   【看不懂的词】查《名词表.md》。
+
+  【设计上的小心思】全页颜色只有一个变量 --accent 在控制：
+   换主题 = 改一个值，头像渐变、链接悬停、主题按钮一起变。
+   "改一行，全局生效"——这就是 CSS 变量的浪漫。
+════════════════════════════════════════════════════════════════
+-->
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -6,7 +23,8 @@
   <title>陈某人 · 个人主页</title>
   <style>
     /* ==================== CSS 部分 ==================== */
-    /* 主题变量：换 accent 一个值，头像渐变、链接悬停、主题按钮一起变 */
+    /* 主题变量：换 accent 一个值，头像渐变、链接悬停、主题按钮一起变。
+       :root 里定义的变量，全页面任何 CSS 规则都能 var() 引用 */
     :root {
       --accent: #6d5bd0;
       --text: #2b2f3a;
@@ -17,16 +35,18 @@
 
     body {
       /* 居中三行咒语：min-height 撑满一屏 + flex 两个方向都居中。
-         以后每个落地页都用它，可以直接背下来 */
+         以后每个落地页都用它，可以直接背下来。
+         100vh = viewport height（视口高度），vh 是"相对屏幕高度"的单位 */
       min-height: 100vh;
       display: flex;
-      justify-content: center;
-      align-items: center;
+      justify-content: center;   /* 主轴（横向）居中 */
+      align-items: center;       /* 交叉轴（纵向）居中 */
       padding: 32px 16px;
 
       font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
       color: var(--text);
-      /* 渐变：个人页的"设计感"一半靠它。两个颜色相近一点就不会俗 */
+      /* 渐变：个人页的"设计感"一半靠它。两个颜色相近一点就不会俗。
+         linear-gradient(角度, 起点色, 终点色) */
       background: linear-gradient(135deg, #edf0fa 0%, #e6f4f4 100%);
     }
 
@@ -36,10 +56,11 @@
       background: #fff;
       border-radius: 20px;
       padding: 40px;
+      /* 阴影四件套：x偏移 y偏移 模糊半径 颜色（rgba 末位是透明度） */
       box-shadow: 0 12px 40px rgba(43, 47, 58, .08);
     }
 
-    /* 顶行：头像在左，换色按钮在右 */
+    /* 顶行：头像在左，换色按钮在右。两端对齐靠 space-between */
     .top-row {
       display: flex;
       justify-content: space-between;
@@ -49,7 +70,8 @@
     .avatar {
       width: 72px;
       height: 72px;
-      border-radius: 50%;
+      border-radius: 50%;        /* 50% = 正圆（只要元素是方的） */
+      /* 这里 flex 不是排版，是让中间那个"陈"字居中——同一个属性，两种用法 */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -63,18 +85,19 @@
     .theme-btn {
       border: 1px solid #e4e5ef;
       background: #fff;
-      border-radius: 999px;
+      border-radius: 999px;      /* 999px 大圆角 = 胶囊形 */
       padding: 6px 14px;
       font-size: 12px;
       color: #6a6a7e;
       cursor: pointer;
-      transition: border-color .2s, color .2s;
+      transition: border-color .2s, color .2s;   /* 过渡：颜色变化用 0.2 秒平滑完成 */
     }
     .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
 
     /* 语义化标签 header：页面头部信息（名字 + 签名） */
     header h1 {
-      /* 字体搭配：无衬线正文 + 衬线大标题，最省事的"不像默认"技巧 */
+      /* 字体搭配：无衬线正文 + 衬线大标题，最省事的"不像默认"技巧。
+         serif = 有衬线（笔画头尾有装饰），sans-serif = 无衬线（简洁现代） */
       font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
       font-size: 26px;
       margin: 18px 0 6px;
@@ -83,6 +106,7 @@
 
     /* 语义化标签 nav：导航链接区 */
     .links { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 6px; }
+    /* flex-wrap: wrap = 一行放不下就换行（手机上必用） */
     .links a {
       display: inline-flex;
       align-items: center;
@@ -91,22 +115,22 @@
       background: #f2f3f9;
       color: #4a4a5e;
       font-size: 13px;
-      text-decoration: none;
+      text-decoration: none;     /* a 标签默认有下划线，这行去掉 */
       transition: background .2s, color .2s;
     }
     .links a:hover { background: var(--accent); color: #fff; }
-    .links a.primary { background: var(--accent); color: #fff; }
+    .links a.primary { background: var(--accent); color: #fff; }   /* .primary = 主链接，默认高亮 */
 
     /* 语义化标签 section：一段独立的内容 */
     .about { margin-top: 24px; }
     .about h2 {
       font-size: 13px;
       font-weight: 500;
-      letter-spacing: .08em;
+      letter-spacing: .08em;     /* 字距拉开一点，小标题更有"呼吸感" */
       color: var(--muted);
       margin-bottom: 8px;
     }
-    .about p { font-size: 14px; line-height: 1.75; color: #4a4a5e; }
+    .about p { font-size: 14px; line-height: 1.75; color: #4a4a5e; }   /* line-height 1.75 行高，长段落更易读 */
 
     .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .tag {
@@ -121,13 +145,14 @@
     footer {
       margin-top: 28px;
       padding-top: 16px;
-      border-top: 1px solid #f0f0f5;
+      border-top: 1px solid #f0f0f5;   /* 顶部分隔线 */
       font-size: 12px;
       color: #a8a8b8;
     }
 
+    /* @media = 媒体查询：屏幕窄于 480px 时启用里面的规则——响应式布局的最小形态 */
     @media (max-width: 480px) {
-      .card { padding: 28px 22px; }
+      .card { padding: 28px 22px; }   /* 手机上卡片内边距收一点，省地方 */
     }
   </style>
 </head>
@@ -141,11 +166,14 @@
       <button type="button" id="theme-btn" class="theme-btn">换色</button>
     </div>
 
+    <!-- header：页面头部——名字 + 一句话签名 -->
     <header>
       <h1>陈某人</h1>
       <p class="tagline">大二学生 · 正在从零体验计算机的各个方向</p>
     </header>
 
+    <!-- nav：导航链接区。target="_blank" 新窗口打开；
+         rel="noopener" 安全标配（防新页面拿到你的 window 对象） -->
     <nav class="links">
       <a class="primary" href="https://github.com/cry-88" target="_blank" rel="noopener">GitHub</a>
       <!-- 换成你的邮箱：href="mailto:you@example.com" -->
@@ -153,6 +181,7 @@
       <!-- 想加链接就复制一行 <a>，比如博客、B站、知乎 -->
     </nav>
 
+    <!-- section：一段独立内容。用两个 section 把"关于我"和"在做什么"分开 -->
     <section class="about">
       <h2>关于我</h2>
       <!-- 这段是示例，换成你自己的话：你是谁、在学什么、对什么好奇。两三句就够 -->
@@ -178,9 +207,18 @@
     // ==================== JS 部分（全部只有这几行）====================
     // 换色 = 改 :root 里的 --accent 一个变量值。
     // 头像渐变、链接悬停色都会跟着变——"改一行，全局生效"，D1 学过的那招
+
+    // let light = true 记录当前是浅色还是深色主题（true = 浅色）
     let light = true;
+
+    // addEventListener('click', ...)：给按钮绑一个点击监听——
+    // 不直接写 onclick，是因为"一个元素能绑多个监听，互不覆盖"
     document.getElementById('theme-btn').addEventListener('click', () => {
-      light = !light;
+      light = !light;   // ! 取反：true ↔ false 来回切
+
+      // documentElement = <html> 根元素，CSS 变量就定义在它身上（:root）
+      // setProperty('--accent', 值)：JS 直接改 CSS 变量——
+      // 这是 JS 和 CSS 联动的标准通道，比逐个改元素 style 优雅得多
       document.documentElement.style.setProperty('--accent', light ? '#6d5bd0' : '#0f8a6d');
     });
   </script>

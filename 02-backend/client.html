@@ -1,24 +1,42 @@
 <!DOCTYPE html>
+<!--
+════════════════════════════════════════════════════════════════
+  笑话播放器 · D2 后端 demo 的前端页面（教学注释版）
+════════════════════════════════════════════════════════════════
+
+  【这个页面是干嘛的】它就是 D1 那种纯前端页面——HTML + CSS + JS。
+   唯一的新东西：JS 用 fetch() 跟服务器要数据 / 送数据。
+   【它和后端怎么配合】这个页面负责"显示"，app.py 负责"数据"。
+   浏览器按 /play 拿到本页面，页面里的 fetch 再调 /api/joke/random 等接口。
+   【怎么跑】先启动服务器（app.py），再访问 http://localhost:5050/play
+════════════════════════════════════════════════════════════════
+-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <title>笑话播放器</title>
 <style>
+  /* ==================== CSS：皮肤，从简 ==================== */
+  /* max-width + margin: auto：经典的水平居中咒语（块级元素版） */
   body { font-family: "Microsoft YaHei", sans-serif; max-width: 480px; margin: 60px auto; padding: 0 16px; }
+  /* #joke 用 id 选择器（#号开头）：整个页面唯一的笑话卡片 */
   #joke { background: #f5f6fa; border-radius: 12px; padding: 24px; min-height: 90px; }
-  .setup { font-weight: bold; }
-  .punchline { color: #4f6ef7; margin-top: 10px; }
+  .setup { font-weight: bold; }                 /* 铺垫加粗 */
+  .punchline { color: #4f6ef7; margin-top: 10px; }   /* 包袱用主题蓝 */
   button { margin-top: 16px; padding: 10px 24px; font-size: 16px; cursor: pointer; }
   input { width: 90%; padding: 8px; }
-  #msg { margin-left: 10px; color: #2da44e; }
+  #msg { margin-left: 10px; color: #2da44e; }   /* 投稿结果的提示文字 */
 </style>
 </head>
 <body>
+  <!-- ==================== HTML：骨架 ==================== -->
   <h1>😂 随机笑话</h1>
+  <!-- 这句话只是占位，页面打开后立刻被 fetch 到的真笑话替换掉 -->
   <div id="joke">点下面的按钮，让服务器讲一个</div>
+  <!-- onclick="getJoke()"：点击时调用 JS 里的 getJoke 函数（最简单的事件绑定写法） -->
   <button onclick="getJoke()">再来一个</button>
 
-  <hr>
+  <hr>   <!-- 分隔线：上面"要笑话"，下面"投稿笑话" -->
   <h3>✏️ 投稿一条你的笑话</h3>
   <input id="setup" placeholder="铺垫（问题部分）">
   <input id="punchline" placeholder="包袱（答案部分）">
@@ -26,32 +44,46 @@
   <span id="msg"></span>
 
 <script>
+// ==================== JS：肌肉 ====================
 // 这个页面就是 D1 你写过的那种 HTML/JS。
 // 它只干一件事：向服务器要数据，然后把数据显示出来。
+// 和后端交互的全部魔法，就是 fetch 这一个函数。
+
+// async function = 异步函数：里面可以用 await "等"网络结果。
+// 为什么需要异步？网络请求要等几十毫秒到几秒，等待期间不能卡死页面——
+// async/await 就是"排队时你可以刷手机，到了叫你"的写法
 async function getJoke() {
-  // fetch = 浏览器向服务器发一个请求，等它把数据运回来
+  // fetch = 浏览器向服务器发一个请求，等它把数据运回来。
+  // await 的意思是：等这一步完成再往下走（读代码时可以当成"同步的一步"）
   const res = await fetch("/api/joke/random");
-  const joke = await res.json();   // 把服务器运回的 JSON 变回 JS 对象
+  // res 是"响应对象"，里面的身体还是 JSON 文本；
+  // res.json() 把它解析成 JS 对象——这一步也要 await（解析是异步的）
+  const joke = await res.json();
+  // innerHTML 把 HTML 字符串塞进元素；模板字符串插值，比拼字符串清晰
   document.getElementById("joke").innerHTML =
     `<div class="setup">${joke.setup}</div><div class="punchline">${joke.punchline}</div>`;
 }
 
 // 投稿：这次不是"要数据"，是"送数据"给服务器
 async function addJoke() {
+  // .value 读输入框里用户打的字
   const setup = document.getElementById("setup").value;
   const punchline = document.getElementById("punchline").value;
   // fetch 默认是 GET；送数据必须显式声明三件事：
   const res = await fetch("/api/joke", {
-    method: "POST",                                    // 1. 用 POST 方法
-    headers: {"Content-Type": "application/json"},     // 2. 告诉服务器：我送的是 JSON
+    method: "POST",                                    // 1. 用 POST 方法（GET 数据在网址，POST 数据在身体）
+    headers: {"Content-Type": "application/json"},     // 2. 告诉服务器：我送的是 JSON（不然它按表单解析，直接 400）
     body: JSON.stringify({setup, punchline})           // 3. JS 对象 → JSON 字符串，装进"身体"运过去
+    // {setup, punchline} 是 ES6 简写：键名和变量名相同时可以只写一个
   });
+  // res.ok 是布尔值：状态码 200-299 为 true——一句话判断成败，不用记数字
   const msg = document.getElementById("msg");
   if (res.ok) {
     msg.textContent = "投稿成功！点\"再来一个\"可能就抽到它";
+    // 清空输入框，准备下一条
     document.getElementById("setup").value = "";
     document.getElementById("punchline").value = "";
-    getJoke();   // 顺手刷新一条
+    getJoke();   // 顺手刷新一条——很可能就是你刚投的那条
   } else {
     msg.textContent = "投稿失败：铺垫和包袱都要填";
   }

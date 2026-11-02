@@ -1,40 +1,68 @@
 <!DOCTYPE html>
+<!--
+════════════════════════════════════════════════════════════════
+  我的待办清单 · D1 前端体验 demo（教学注释版）
+════════════════════════════════════════════════════════════════
+
+  【这个文件怎么读】前端 = 三件事，全在这一个文件里：
+    ① HTML（骨架）：页面有哪些元素——输入框、按钮、列表
+    ② CSS（皮肤）：元素长什么样——颜色、大小、间距、动画
+    ③ JS（肌肉）：元素怎么动——点按钮发生什么、数据怎么变
+
+  【前端最核心的心智模型】
+    数据（todos 数组）→ render() → 界面
+    你只负责改数据，画面自动重画。"界面是数据的函数"。
+
+  【怎么跑】双击文件用浏览器打开就行，不需要任何安装。
+     想改颜色：搜 :root，改 --accent 一个值，全局生效。
+     看不懂的词：查《名词表.md》。
+════════════════════════════════════════════════════════════════
+-->
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <!-- viewport：让页面在手机上按设备宽度显示，不然手机默认按桌面宽度渲染再缩小，字会巨小 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>我的待办清单</title>
   <style>
     /* ==================== CSS 部分：负责"皮肤" ==================== */
     /* 主题变量：改这里就能换整站配色 —— 但变量名是语义契约：
        muted = 需要弱化的文字，danger = 警示/悬停色；改之前先搜 var(--x) 看它管着哪些元素 */
+    /* :root 是"根选择器"，写在它里面的变量全局可用。
+       var(--accent) 就是"引用 accent 这个值"——颜色只定义一次，到处引用 */
     :root {
-      --accent: #a174e0;
-      --bg: #d5dcf8;
-      --card: #eaf6fd;
-      --text: #2b2f3a;
-      --muted: #8a85a3;
-      --danger: #e8a33d;
+      --accent: #a174e0;   /* 主题色：按钮、进度条、聚焦边框都用它 */
+      --bg: #d5dcf8;       /* 页面背景色 */
+      --card: #eaf6fd;     /* 卡片背景色 */
+      --text: #2b2f3a;     /* 正文文字色 */
+      --muted: #8a85a3;    /* 弱化文字色（次要信息） */
+      --danger: #e8a33d;   /* 悬停警示色（删除按钮） */
     }
 
+    /* * 是通配符：选中页面上所有元素。
+       box-sizing: border-box 让 width 包含 padding 和边框——
+       不加这句，加内边距会把盒子"撑胖"，布局计算反人类 */
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      /* 字体栈：按顺序找，mac 用苹方，Windows 用微软雅黑，都没有用系统默认 */
       background: var(--bg);
       color: var(--text);
+      /* flex 布局 + 水平居中：让 .app 卡片待在屏幕中间。
+         display:flex 让 body 变成"弹性容器"，justify-content 管主轴（横向）对齐 */
       display: flex;
       justify-content: center;
-      padding: 48px 16px;
+      padding: 48px 16px;   /* 上下 48 左右 16：手机上不贴边 */
     }
 
     .app {
       width: 100%;
-      max-width: 520px;
+      max-width: 520px;     /* 宽屏上不无限拉宽，最大 520px */
       background: var(--card);
-      border-radius: 16px;
+      border-radius: 16px;  /* 圆角：现代 UI 的标志 */
       padding: 28px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, .06);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .06);   /* 阴影：让卡片"浮"起来，很淡不抢戏 */
     }
 
     h1 { font-size: 24px; }
@@ -47,28 +75,28 @@
     .progress-text { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
     .progress-bar {
       height: 8px;
-      background: rgba(255, 255, 255, .75);
+      background: rgba(255, 255, 255, .75);   /* rgba 的 a 是透明度，.75 = 75% 不透明 */
       border: 1px solid #e4e6ee;
-      border-radius: 999px;
-      overflow: hidden;
+      border-radius: 999px;   /* 超大圆角 = 胶囊形，999px 是取巧写法 */
+      overflow: hidden;       /* 超出部分裁掉：让里面的 fill 乖乖待在圆角里 */
     }
     .progress-fill {
-      height: 100%;
-      width: 0;
+      height: 100%;           /* 高度撑满父容器 */
+      width: 0;               /* 初始 0，JS 会动态改这个值 */
       background: var(--accent);
       border-radius: 999px;
-      transition: width .35s ease;
+      transition: width .35s ease;   /* 过渡动画：width 变化时用 0.35 秒平滑过渡，而不是瞬变 */
     }
 
     /* 输入区用 flex 横向排列：输入框占满剩余空间 */
-    .todo-form { display: flex; gap: 8px; }
+    .todo-form { display: flex; gap: 8px; }   /* gap：子元素之间的间距，比 margin 更好用 */
     .todo-form input {
-      flex: 1;
+      flex: 1;                /* flex:1 = 占据所有剩余空间（输入框拉长，别人不变） */
       border: 1.5px solid #e4e6ee;
       border-radius: 10px;
       padding: 10px 12px;
       font-size: 14px;
-      outline: none;
+      outline: none;          /* 去掉默认聚焦蓝框，改用下面 :focus 的边框变色提示 */
     }
     /* 新增：分类下拉框，样式跟着输入框走，但不占满空间 */
     .todo-form select {
@@ -78,11 +106,11 @@
       font-size: 14px;
       background: #fff;
       color: var(--text);
-      cursor: pointer;
+      cursor: pointer;        /* 鼠标移上去变小手：告诉用户"这可点" */
       outline: none;
     }
     .todo-form input:focus,
-    .todo-form select:focus { border-color: var(--accent); }
+    .todo-form select:focus { border-color: var(--accent); }   /* :focus = 获得焦点时的状态 */
     .todo-form button {
       background: var(--accent);
       color: #fff;
@@ -92,7 +120,7 @@
       font-size: 14px;
       cursor: pointer;
     }
-    .todo-form button:hover { opacity: .9; }
+    .todo-form button:hover { opacity: .9; }   /* :hover = 鼠标悬停时 */
 
     .filters { display: flex; gap: 8px; margin: 18px 0 12px; }
     .filter {
@@ -104,15 +132,15 @@
       border-radius: 999px;
       cursor: pointer;
     }
-    .filter.active { background: var(--accent); color: #fff; }
+    .filter.active { background: var(--accent); color: #fff; }   /* .active 是当前选中的过滤条件 */
 
-    .todo-list { list-style: none; }
+    .todo-list { list-style: none; }   /* 去掉 ul 默认的小圆点 */
     .todo-item {
-      display: flex;
-      align-items: center;
+      display: flex;               /* 每一行内部也是 flex：勾选框/文字/徽标/删除 横向排 */
+      align-items: center;         /* 垂直方向居中 */
       gap: 10px;
       padding: 10px 4px;
-      border-bottom: 1px solid #f0f1f5;
+      border-bottom: 1px solid #f0f1f5;   /* 行与行之间的分隔线 */
     }
     .todo-item .todo-text { flex: 1; font-size: 15px; }
 
@@ -120,24 +148,25 @@
        注意：颜色不写死在这条 CSS 里，而是 JS 按数据查 CAT_STYLE 表
        生成 style 属性——想换配色，改 JS 里那一张表就够了 */
     .badge {
-      flex-shrink: 0;
+      flex-shrink: 0;              /* 不许被压缩：空间不够时保它的大小 */
       font-size: 11px;
       line-height: 1;
       padding: 4px 8px;
       border-radius: 999px;
     }
-    .todo-item.done .badge { opacity: .5; }
+    .todo-item.done .badge { opacity: .5; }   /* 完成的待办，徽标变淡——一个类名控制一组样式 */
 
     /* 编辑态：正在编辑的那一行，文字换成输入框 */
     .edit-input {
       flex: 1;
-      font-family: inherit;
+      font-family: inherit;        /* input 默认不继承字体，这行让它跟页面一致 */
       font-size: 15px;
       border: 1.5px solid var(--accent);
       border-radius: 6px;
       padding: 4px 8px;
       outline: none;
     }
+    /* 完成态：文字划线 + 变灰。注意选择器 .todo-item.done——"同时有两个类"的元素 */
     .todo-item.done .todo-text { text-decoration: line-through; color: var(--muted); }
     .todo-item .delete {
       border: none;
@@ -145,7 +174,7 @@
       color: var(--muted);
       font-size: 18px;
       cursor: pointer;
-      visibility: hidden;
+      visibility: hidden;          /* 默认隐藏，鼠标悬停整行时才出现——减少视觉噪音 */
     }
     .todo-item:hover .delete { visibility: visible; color: var(--danger); }
 
@@ -154,7 +183,7 @@
 
     .todo-footer {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-between;   /* 两端对齐：左边计数，右边按钮 */
       align-items: center;
       margin-top: 16px;
       font-size: 13px;
@@ -172,6 +201,8 @@
 </head>
 <body>
   <!-- ==================== HTML 部分：负责"骨架" ==================== -->
+  <!-- HTML 只用记三类标签：容器（div/main/section）、内容（h1/p/span）、
+       控件（input/button/select）。每个标签是一个"元素节点"，JS 靠 id 找到它们 -->
   <main class="app">
     <h1>📋 今日待办</h1>
     <p class="subtitle">单文件版：HTML + CSS + JS 都在这个文件里，双击即用</p>
@@ -182,14 +213,16 @@
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
 
-    <!-- 输入区：一个输入框 + 一个分类下拉 + 一个按钮 -->
+    <!-- 输入区：一个输入框 + 一个分类下拉 + 一个按钮。
+         form 的好处：输入框里按回车自动触发 submit，不用单独绑键盘事件 -->
     <form id="todo-form" class="todo-form">
       <input id="todo-input" type="text" placeholder="今天要做什么？" autocomplete="off">
-      <select id="todo-cat"></select>
-      <button type="submit">添加</button>
+      <!-- placeholder = 输入框空的时的提示文字；autocomplete="off" 关掉浏览器历史填充 -->
+      <select id="todo-cat"></select>   <!-- 下拉框的选项是 JS 生成的，HTML 里故意留空 -->
+      <button type="submit">添加</button>   <!-- type="submit" 才会触发表单提交事件 -->
     </form>
 
-    <!-- 过滤条 -->
+    <!-- 过滤条：data-filter 是"自定义数据属性"，JS 靠它知道该按什么过滤 -->
     <div class="filters">
       <button type="button" class="filter active" data-filter="all">全部</button>
       <button type="button" class="filter" data-filter="active">未完成</button>
@@ -208,15 +241,20 @@
 
   <script>
     // ==================== JS 部分：负责"肌肉" ====================
+    // JS 三大件就够用：变量存数据、函数打包逻辑、事件响应用户。
 
     // 存储封装：有些环境（比如预览面板的 iframe）会禁用 localStorage，
     // 用 try/catch 包住——禁用时页面照常能用，只是刷新后不保存
+    // localStorage = 浏览器自带的"小仓库"，关掉页面数据还在，容量约 5MB
     const storage = {
       load() {
+        // getItem 取出来的是字符串或 null；'|| []' 保证第一次打开时解析到空数组
+        // JSON.parse：把 JSON 字符串变回 JS 数组/对象（仓库 ↔ 货物 的翻译官）
         try { return JSON.parse(localStorage.getItem('todos') || '[]'); }
-        catch (e) { return []; }
+        catch (e) { return []; }   // 数据损坏时也别崩，当空的处理
       },
       save(data) {
+        // JSON.stringify：反向操作，JS 数组 → JSON 字符串
         try { localStorage.setItem('todos', JSON.stringify(data)); } catch (e) {}
       }
     };
@@ -233,11 +271,14 @@
 
     // 生成徽标 HTML：颜色按分类查表；表外分类走兜底，数据脏了也不崩
     function badgeHtml(cat) {
+      // CAT_STYLE[cat] 查不到就 undefined，|| 兜底用'生活'的配色
       const s = CAT_STYLE[cat] || CAT_STYLE['生活'];
+      // 模板字符串（反引号）：里面可以直接用 ${} 插值，比拼字符串清晰一万倍
       return `<span class="badge" style="background:${s.bg};color:${s.fg}">${escapeHtml(cat)}</span>`;
     }
 
     // ===== 数据层 =====
+    // let vs const：会变的用 let，不变的用 const——好习惯，能防手滑改错
     let todos = storage.load();
     if (todos.length === 0) {
       // 首次打开放三条示例：进度条和分类徽标一打开就能看到效果
@@ -247,35 +288,41 @@
         { id: 3, text: '晚上去跑步',           done: false, cat: '生活' },
       ];
     }
-    todos.forEach(t => { if (!t.cat) t.cat = '生活'; });  // 旧数据没有 cat 字段，自动补默认分类
+    // forEach：对数组每个元素执行一遍。旧数据没有 cat 字段，自动补默认分类——兼容旧数据
+    todos.forEach(t => { if (!t.cat) t.cat = '生活'; });
 
-    let currentFilter = 'all';
+    let currentFilter = 'all';   // 当前过滤条件，三个 filter 按钮会改它
     let editingId = null;    // 正在编辑的待办 id；null = 当前没有在编辑的
     let cancelEdit = false;  // ESC 标志位：告诉 blur 处理器"这次别保存"
 
     // ===== 渲染层：数据 -> 界面。数据每变一次，整个列表重画一次 =====
     // 核心心智模型：你只负责改数据，画面交给 render()
     function render() {
+      // getElementById：靠 id 找到 HTML 里的元素——JS 操作页面的入口
       const list = document.getElementById('todo-list');
-      list.innerHTML = '';
+      list.innerHTML = '';   // 先清空，再重建——"重画"就是这么粗暴而可靠
 
+      // filter：按当前过滤条件挑出该显示的待办，得到新数组（不改原数组）
       const visible = todos.filter(t => {
-        if (currentFilter === 'active') return !t.done;
-        if (currentFilter === 'done') return t.done;
-        return true;
+        if (currentFilter === 'active') return !t.done;   // 未完成：done 是 false
+        if (currentFilter === 'done') return t.done;       // 已完成
+        return true;                                        // 全部
       });
 
       visible.forEach(todo => {
+        // createElement：凭空造一个 li 元素（还没挂到页面上）
         const li = document.createElement('li');
+        // 三元运算符：条件 ? A : B。done 的加 ' done' 类名，CSS 里有对应样式
         li.className = 'todo-item' + (todo.done ? ' done' : '');
 
         if (todo.id === editingId) {
           // 编辑态：整行换成 徽标 + 输入框，聚焦并全选旧文字
           li.innerHTML = `${badgeHtml(todo.cat)}<input class="edit-input" value="${escapeHtml(todo.text)}" data-id="${todo.id}">`;
-          const input = li.querySelector('.edit-input');
-          input.focus();
-          input.select();
-          // 失焦 = 保存（除非刚按了 ESC）。render 每次重建 DOM，所以直接给这个 input 挂监听
+          const input = li.querySelector('.edit-input');   // querySelector：按 CSS 选择器找元素
+          input.focus();    // 自动聚焦，省一次点击
+          input.select();   // 全选旧文字，直接打字就替换
+          // blur = 失去焦点（点了别处）。失焦 = 保存（除非刚按了 ESC）。
+          // render 每次重建 DOM，所以直接给这个 input 挂监听——旧的监听随旧元素一起被丢弃
           input.addEventListener('blur', () => {
             if (cancelEdit) { cancelEdit = false; editingId = null; render(); return; }
             saveEdit(input);
@@ -289,6 +336,7 @@
             <button type="button" class="delete" data-id="${todo.id}">×</button>
           `;
         }
+        // appendChild：把造好的 li 真正挂到页面上——不挂上去，页面永远看不到
         list.appendChild(li);
       });
 
@@ -296,6 +344,7 @@
       if (visible.length === 0) {
         const tip = document.createElement('li');
         tip.className = 'empty-tip';
+        // textContent 直接设文字（不走 HTML 解析，更安全）
         tip.textContent = todos.length ? '这个过滤条件下没有待办' : '还没有待办，从上面加一条吧';
         list.appendChild(tip);
       }
@@ -303,29 +352,32 @@
       // ===== 新增：进度条——算出来的，不是画出来的 =====
       // done 数量 ÷ 总数 = 宽度百分比。记住这个句式：界面是数据的函数
       const total = todos.length;
-      const doneCount = todos.filter(t => t.done).length;
-      const pct = total ? Math.round(doneCount / total * 100) : 0;
+      const doneCount = todos.filter(t => t.done).length;   // filter + length = 数数
+      const pct = total ? Math.round(doneCount / total * 100) : 0;   // Math.round 四舍五入
       document.getElementById('progress-text').textContent =
         total ? `已完成 ${doneCount} / ${total}` : '还没有待办';
+      // style.width 直接改 CSS——程序控制样式的标准入口
       document.getElementById('progress-fill').style.width = pct + '%';
 
       const left = todos.filter(t => !t.done).length;
       document.getElementById('todo-count').textContent = `还剩 ${left} 项`;
 
-      storage.save(todos);
+      storage.save(todos);   // 每次渲染完顺手存盘——数据不丢
     }
 
     // 保存编辑：把输入框的值写回 data，然后重画。空文本 = 保留原值（产品决策，可改）
     function saveEdit(input) {
+      // find：按条件找第一个匹配的元素，找不到返回 undefined
       const todo = todos.find(t => t.id === editingId);
       if (!todo) return;                    // editingId 已清空时的兜底
-      const text = input.value.trim();
+      const text = input.value.trim();      // trim 去掉首尾空格
       if (text) todo.text = text;           // 空文本不保存，保留原值
       editingId = null;
       render();
     }
 
     // 转义用户输入，防止把待办文字写成 HTML 标签执行（安全好习惯）
+    // 原理：把 < > & " ' 换成对应的 HTML 实体，浏览器就不再当它们是指令
     function escapeHtml(s) {
       return s.replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -344,22 +396,27 @@
 
     // 添加：表单提交（回车和点按钮都算提交），连分类一起读出来
     document.getElementById('todo-form').addEventListener('submit', e => {
+      // preventDefault：阻止表单默认行为（跳转刷新页面）——SPA 式交互的第一课
       e.preventDefault();
       const input = document.getElementById('todo-input');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text) return;   // 空输入直接不理
+      // Date.now() 取当前毫秒时间戳当 id——简单可靠的唯一 id 生成法
       todos.push({ id: Date.now(), text, done: false, cat: catSelect.value });
       input.value = '';
       render();
     });
 
     // 勾选 / 删除：事件委托——整个列表只挂一个监听，靠 data-id 找到是哪一条
+    // 为什么不给每个 li 挂监听？因为 render() 每次重建 DOM，挂了也会丢。
+    // 挂父容器：新加的子元素自动"继承"这个监听——前端经典套路
     document.getElementById('todo-list').addEventListener('click', e => {
-      const id = Number(e.target.dataset.id);
+      const id = Number(e.target.dataset.id);   // e.target = 实际被点的元素；dataset 读自定义属性
       if (e.target.type === 'checkbox') {
         const todo = todos.find(t => t.id === id);
-        if (todo) { todo.done = !todo.done; render(); }
-      } else if (e.target.classList.contains('delete')) {
+        if (todo) { todo.done = !todo.done; render(); }   // 取反切换完成状态
+      } else if (e.target.classList.contains('delete')) {   // classList：类名的增删查
+        // filter 反向用：留下 id 不相等的 = 删掉那一条
         todos = todos.filter(t => t.id !== id);
         render();
       }
@@ -378,11 +435,13 @@
       if (!e.target.classList.contains('edit-input')) return;
       if (e.key === 'Enter') { e.preventDefault(); saveEdit(e.target); }
       if (e.key === 'Escape') { cancelEdit = true; e.target.blur(); }
+      // 注意 keydown 也挂在 todo-list 上（委托）：blur 会触发 input 上那个监听，cancelEdit 在那接应
     });
 
     // 过滤
     document.querySelectorAll('.filter').forEach(btn => {
       btn.addEventListener('click', () => {
+        // 先所有人下岗，再给点中的上岗——单选按钮的标准实现
         document.querySelectorAll('.filter').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentFilter = btn.dataset.filter;
